@@ -37,6 +37,7 @@ pub mod internal {
     pub use cmd_partial;  
 }
 
+
 #[macro_export]
 /// Create a Command with the `cmd!` macro and call output() on it
 macro_rules! run {
@@ -67,30 +68,35 @@ macro_rules! spawn {
 /// The first item is the program name. Following items are passed as args
 /// 
 /// Example
-/// ```no_run
-/// cmd!(echo Hello World)
+/// ```
+/// # use cmd_macro::cmd;
+/// cmd!(echo Hello World);
 /// ```
 /// Single words are stringified 
-/// ```no_run
+/// ```ignore
 /// cmd!(echo test) == cmd!(echo "test")
 /// ```
 /// Escaping spaces with quotes is possible 
 /// ```
-/// cmd!(echo "Hello World!")
+/// # use cmd_macro::cmd;
+/// let mut x = cmd!(echo "Hello World!");
 /// ```
 /// Identifiers in parantheses are interpolated
 /// ```no_run
+/// # use cmd_macro::cmd;
 /// let name = "Steve";
-/// cmd!(echo (name))
+/// cmd!(echo (name));
 /// ```
 /// Identifiers followed by `..` are interpolated as iterators
 /// ```no_run
+/// # use cmd_macro::cmd;
 /// let names = ["Steve", "Mike"];
-/// cmd!(echo (names..))
+/// cmd!(echo (names..));
 /// ```
-/// SUse `var(name)` to interpolate env vars
+/// Use `var(name)` to interpolate env vars
 /// ```no_run
-/// cmd!(echo (var(PATH)))
+/// # use cmd_macro::cmd;
+/// cmd!(echo (var(PATH)));
 /// ```
 macro_rules! cmd {
     ($app:tt $($q:tt)*) => {
