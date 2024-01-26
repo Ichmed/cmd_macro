@@ -1,6 +1,9 @@
-use std::{process::Output, string::FromUtf8Error};
-
-
+#[cfg(feature = "ok")]
+pub mod ok;
+#[cfg(feature = "opt_arg")]
+pub mod opt_arg;
+#[cfg(feature = "output")]
+pub mod output;
 
 pub mod internal {
     #[macro_export]
@@ -19,12 +22,26 @@ pub mod internal {
             stringify!($e)
         };
     }
-    
+
     #[macro_export]
     macro_rules! arg {
         ($x:ident; (var($e:ident))) => {
             $x.arg(std::env::var(stringify!($e)).unwrap_or_default())
         };
+        ($x:ident; ($f:tt $e:tt?)) => {{
+            #[cfg(feature = "opt_arg")]
+            let x = $x.opt_arg(($crate::internal::cmd_partial!($f), $e));
+            #[cfg(not(feature = "opt_arg"))]
+            let x = compile_error!("Requires 'opt_arg' feature");
+            x
+        }};
+        ($x:ident; ($e:tt?)) => {{
+            #[cfg(feature = "opt_arg")]
+            let x = $x.opt_arg($e);
+            #[cfg(not(feature = "opt_arg"))]
+            let x = compile_error!("Requires 'opt_arg' feature");
+            x
+        }};
         ($x:ident; ($e:tt..)) => {
             $x.args($e)
         };
@@ -33,10 +50,9 @@ pub mod internal {
         };
     }
 
-    pub use arg;  
-    pub use cmd_partial;  
+    pub use arg;
+    pub use cmd_partial;
 }
-
 
 #[macro_export]
 /// Create a Command with the `cmd!` macro and call output() on it
@@ -63,20 +79,40 @@ macro_rules! spawn {
 }
 
 #[macro_export]
+/// Create an iterator to add args to an existing Command
+/// ```
+/// # use std::process::Command;
+/// # use cmd_macro::args;
+/// let mut x = Command::new("echo");
+/// x.args(args!(some text here));
+/// ```
+//TODO: Can probably be more sophisticated
+macro_rules! args {
+    ($name:tt $($t:tt)*) => {
+
+        [std::ffi::OsStr::new($crate::internal::cmd_partial!($name))]
+            .into_iter()
+            .chain($crate::cmd!("" $($t)*).get_args())
+    }
+
+}
+
+#[macro_export]
 /// Create a std::process::Output in the style of a terminal line
-/// 
+///
 /// The first item is the program name. Following items are passed as args
-/// 
+///
 /// Example
 /// ```
 /// # use cmd_macro::cmd;
 /// cmd!(echo Hello World);
 /// ```
-/// Single words are stringified 
-/// ```ignore
+/// Single words are stringified
+/// ```no_test
+/// // (You can not actually compare Commands)
 /// cmd!(echo test) == cmd!(echo "test")
 /// ```
-/// Escaping spaces with quotes is possible 
+/// Escaping spaces with quotes is possible
 /// ```
 /// # use cmd_macro::cmd;
 /// let mut x = cmd!(echo "Hello World!");
@@ -98,6 +134,8 @@ macro_rules! spawn {
 /// # use cmd_macro::cmd;
 /// cmd!(echo (var(PATH)));
 /// ```
+/// Note that this will use the callers environment variables,
+/// not any passed into the command
 macro_rules! cmd {
     ($app:tt $($q:tt)*) => {
         {
@@ -108,42 +146,14 @@ macro_rules! cmd {
     };
 }
 
-pub trait OutputExt {
-    /// Tries to parse stdout into a valid [String] without trailing newlines
-    fn stdout(&self) -> Result<String, FromUtf8Error>;
-    /// Tries to parse stderr into a valid [String] without trailing newlines
-    fn stderr(&self) -> Result<String, FromUtf8Error>;
-    /// Parses stdout lossily into a valid [String] without trailing newlines
-    fn stdout_lossy(&self) -> String;
-    /// Parses stderr lossily into a valid [String] without trailing newlines
-    fn stderr_lossy(&self) -> String;
-}
-
-impl OutputExt for Output {
-    fn stdout(&self) -> Result<String, FromUtf8Error> {
-        String::from_utf8(self.stdout.clone()).map(|x| x.trim_end_matches('\n').to_owned())
-    }
-    
-    fn stderr(&self) -> Result<String, FromUtf8Error> {
-        String::from_utf8(self.stderr.clone()).map(|x| x.trim_end_matches('\n').to_owned())
-    }
-
-    fn stdout_lossy(&self) -> String {
-        String::from_utf8_lossy(&self.stdout).trim_end_matches('\n').to_owned()
-    }
-    
-    fn stderr_lossy(&self) -> String {
-        String::from_utf8_lossy(&self.stderr).trim_end_matches('\n').to_owned()
-    }
-}
-
-
-
 #[cfg(test)]
 mod test {
 
-    use crate::OutputExt;
+    use std::env;
+    use std::process::Command;
+
     use crate::exec;
+    use crate::output::OutputExt;
     use crate::run;
 
     #[test]
@@ -153,7 +163,8 @@ mod test {
 
     #[test]
     fn path() {
-        exec!(echo (var(PATH))).unwrap();
+        env::set_var("MY_VAR", "my_value");
+        assert_eq!("my_value", run!(echo(var(MY_VAR))).unwrap().stdout_lossy());
     }
 
     #[test]
@@ -168,5 +179,49 @@ mod test {
         let name = "Steve";
         let result = run!(echo Hello (name)).unwrap();
         assert_eq!(format!("Hello {name}"), result.stdout().unwrap());
+    }
+
+    #[test]
+    fn interpolate_option() {
+        use crate::opt_arg::OptionalArgExtension;
+        let name = Some("Steve");
+        let result = run!(echo Hello (name?)).unwrap();
+        assert_eq!(format!("Hello Steve"), result.stdout().unwrap());
+    }
+
+    #[test]
+    fn interpolate_option_flag_some() {
+        use crate::opt_arg::OptionalArgExtension;
+        let name = Some("Steve");
+        let result = run!(echo Hello ("Lord" name ?)).unwrap();
+        assert_eq!(format!("Hello Lord Steve"), result.stdout().unwrap());
+    }
+
+    #[test]
+    fn interpolate_option_flag_none() {
+        use crate::opt_arg::OptionalArgExtension;
+        let name: Option<String> = None;
+        let result = run!(echo Hello ("Lord" name ?)).unwrap();
+        assert_eq!("Hello", result.stdout().unwrap());
+    }
+
+    #[test]
+    fn args_macro() {
+        let mut x = Command::new("echo");
+        let name = "Steve";
+        x.args(args!(Hello(name)));
+        let result = x.output().unwrap();
+        assert_eq!(format!("Hello Steve"), result.stdout().unwrap());
+    }
+
+    #[test]
+    fn args_macro_optional() {
+        use crate::opt_arg::OptionalArgExtension;
+        let mut x = Command::new("echo");
+        let name = "Steve";
+        let other = Some("Paul");
+        x.args(args!(Hello (name) (and other ?)));
+        let result = x.output().unwrap();
+        assert_eq!(format!("Hello Steve and Paul"), result.stdout().unwrap());
     }
 }
