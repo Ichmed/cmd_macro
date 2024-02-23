@@ -38,7 +38,8 @@ mod test {
 pub trait OptionalArgExtension<T> {
     /// If T is an Option<Val>, only include this argument if it is `Some(Val)`
     /// 
-    /// If T is a (Name, Option<Val>) the Name will also only be included if the Option is Some(Val)
+    /// If T is a (Name, Option<Val>) or (Name, IntoIter<Item = Val>), the Name will also only be included if the Option is 
+    /// Some(Val) or there is at least one item in the iterator
     /// 
     /// ## Examples
     /// 
@@ -56,6 +57,12 @@ pub trait OptionalArgExtension<T> {
     /// let maybe_flag = ("-c", Some("emacs"));
     /// Command::new("bash").opt_arg(maybe_flag).status();
     /// ```
+    /// ```
+    /// # use std::process::Command;
+    /// # use cmd_macro::opt_arg::OptionalArgExtension;
+    /// let maybe_flag = ("-c", ["echo", "some", "stuff"]);
+    /// Command::new("bash").opt_arg(maybe_flag).status();
+    /// ```
     fn opt_arg(&mut self, val: T) -> &mut Self;
 }
 
@@ -68,12 +75,16 @@ impl<Value: AsRef<OsStr>> OptionalArgExtension<Option<Value>> for Command {
     }
 }
 
-impl<Name: AsRef<OsStr>, Value: AsRef<OsStr>> OptionalArgExtension<(Name, Option<Value>)>
+
+impl<Name: AsRef<OsStr>, Value: AsRef<OsStr>, I: IntoIterator<Item = Value>> OptionalArgExtension<(Name, I)>
     for Command
 {
-    fn opt_arg(&mut self, val: (Name, Option<Value>)) -> &mut Self {
-        if let Some(value) = val.1 {
-            self.arg(val.0.as_ref()).arg(value.as_ref());
+    fn opt_arg(&mut self, val: (Name, I)) -> &mut Self {
+        let (flag, i) = val;
+        let mut i = i.into_iter();
+        if let Some(value) = i.next() {
+            self.arg(flag.as_ref()).arg(value.as_ref());
+            self.args(i);
         }
         self
     }
