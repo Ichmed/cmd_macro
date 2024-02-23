@@ -4,6 +4,7 @@ pub mod ok;
 pub mod opt_arg;
 #[cfg(feature = "output")]
 pub mod output;
+pub mod args;
 
 pub mod internal {
     #[macro_export]
@@ -79,25 +80,6 @@ macro_rules! spawn {
 }
 
 #[macro_export]
-/// Create an iterator to add args to an existing Command
-/// ```
-/// # use std::process::Command;
-/// # use cmd_macro::args;
-/// let mut x = Command::new("echo");
-/// x.args(args!(some text here));
-/// ```
-//TODO: Can probably be more sophisticated
-macro_rules! args {
-    ($name:tt $($t:tt)*) => {
-
-        [std::ffi::OsStr::new($crate::internal::cmd_partial!($name))]
-            .into_iter()
-            .chain($crate::cmd!("" $($t)*).get_args())
-    }
-
-}
-
-#[macro_export]
 /// Create a std::process::Output in the style of a terminal line
 ///
 /// The first item is the program name. Following items are passed as args
@@ -150,7 +132,6 @@ macro_rules! cmd {
 mod test {
 
     use std::env;
-    use std::process::Command;
 
     use crate::exec;
     use crate::output::OutputExt;
@@ -205,23 +186,22 @@ mod test {
         assert_eq!("Hello", result.stdout().unwrap());
     }
 
-    #[test]
-    fn args_macro() {
-        let mut x = Command::new("echo");
-        let name = "Steve";
-        x.args(args!(Hello(name)));
-        let result = x.output().unwrap();
-        assert_eq!(format!("Hello Steve"), result.stdout().unwrap());
-    }
 
     #[test]
-    fn args_macro_optional() {
+    fn interpolate_option_flag_list() {
         use crate::opt_arg::OptionalArgExtension;
-        let mut x = Command::new("echo");
-        let name = "Steve";
-        let other = Some("Paul");
-        x.args(args!(Hello (name) (and other ?)));
-        let result = x.output().unwrap();
-        assert_eq!(format!("Hello Steve and Paul"), result.stdout().unwrap());
+        let packages = vec!["cowsay", "emacs"];
+        let result = run!(echo Installing ("-p" packages ?)).unwrap();
+        assert_eq!("Installing -p cowsay emacs", result.stdout().unwrap());
     }
+
+
+    #[test]
+    fn interpolate_option_flag_list_empty() {
+        use crate::opt_arg::OptionalArgExtension;
+        let packages: Vec<&str> = vec![];
+        let result = run!(echo Installing ("-p" packages ?)).unwrap();
+        assert_eq!("Installing", result.stdout().unwrap());
+    }
+    
 }
