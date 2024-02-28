@@ -7,10 +7,10 @@ edition = "2021"
 default = ["opt_arg", "output", "ok", "debug"]
 opt_arg = []
 output = []
-ok = []
+ok = ["thiserror"]
 debug = []
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-thiserror = "1.0.50"
+thiserror = { version = "1.0.50", optional = true }
