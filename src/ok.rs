@@ -15,12 +15,13 @@ pub trait OkExt: Sized {
     /// ```no_run
     /// # use std::process::Command;
     /// # use cmd_macro::ok::OkExt;
-    /// Command::new("foo").output().expect("no IO error").ok().unwrap();
+    /// let x = Command::new("echo").arg("test").output().ok().unwrap().stdout;
+    /// assert_eq!(String::from_utf8_lossy(&x), "test")
     /// ```
     ///
     /// The returned Err will contain the full stderr of the [Command] if possible, if you do not want this, call `ok_no_msg` instead
-    fn ok(self) -> Result<Self::Success, CommandFailed> {
-        self.ok_no_msg()
+    fn cmd_ok(self) -> Result<Self::Success, CommandFailed> {
+        self.cmd_ok_no_msg()
     }
     
     /// Returns a `Success`-type if the [Command] was succesfull, returns [CommandFailed] otherwise
@@ -29,11 +30,11 @@ pub trait OkExt: Sized {
     /// ```no_run
     /// # use std::process::Command;
     /// # use cmd_macro::ok::OkExt;
-    /// Command::new("foo").output().expect("no IO error").ok().unwrap();
+    /// Command::new("foo").output().ok().unwrap();
     /// ```
     ///
     /// The returned Err will not contain any output from the [Command]
-    fn ok_no_msg(self) -> Result<Self::Success, CommandFailed>;
+    fn cmd_ok_no_msg(self) -> Result<Self::Success, CommandFailed>;
 }
 
 #[derive(Debug, Error)]
@@ -64,7 +65,7 @@ impl Display for CommandFailed {
 
 impl OkExt for Output {
     type Success = Self;
-    fn ok(self) -> Result<Self, CommandFailed> {
+    fn cmd_ok(self) -> Result<Self, CommandFailed> {
         if self.status.success() {
             Ok(self)
         } else {
@@ -75,7 +76,7 @@ impl OkExt for Output {
         }
     }
 
-    fn ok_no_msg(self) -> Result<Self, CommandFailed> {
+    fn cmd_ok_no_msg(self) -> Result<Self, CommandFailed> {
         if self.status.success() {
             Ok(self)
         } else {
@@ -89,7 +90,7 @@ impl OkExt for Output {
 
 impl OkExt for ExitStatus {
     type Success = Self;
-    fn ok_no_msg(self) -> Result<Self, CommandFailed> {
+    fn cmd_ok_no_msg(self) -> Result<Self, CommandFailed> {
         if self.success() {
             Ok(self)
         } else {
@@ -103,19 +104,19 @@ impl OkExt for ExitStatus {
 
 impl OkExt for Result<ExitStatus, std::io::Error> {
     type Success = ExitStatus;
-    fn ok_no_msg(self) -> Result<Self::Success, CommandFailed> {
-        self.map_err(CommandFailed::IO)?.ok()
+    fn cmd_ok_no_msg(self) -> Result<Self::Success, CommandFailed> {
+        self.map_err(CommandFailed::IO)?.cmd_ok()
     }
 }
 
 impl OkExt for Result<Output, std::io::Error> {
     type Success = Output;
 
-    fn ok_no_msg(self) -> Result<Self::Success, CommandFailed> {
-        self.map_err(CommandFailed::IO)?.ok_no_msg()
+    fn cmd_ok_no_msg(self) -> Result<Self::Success, CommandFailed> {
+        self.map_err(CommandFailed::IO)?.cmd_ok_no_msg()
     }
 
-    fn ok(self) -> Result<Self::Success, CommandFailed> {
-        self.map_err(CommandFailed::IO)?.ok()
+    fn cmd_ok(self) -> Result<Self::Success, CommandFailed> {
+        self.map_err(CommandFailed::IO)?.cmd_ok()
     }
 }
