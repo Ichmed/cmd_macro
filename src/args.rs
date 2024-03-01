@@ -10,7 +10,6 @@ use crate::opt_arg::OptionalArgExtension;
 /// let mut x = Command::new("echo");
 /// x.args(args!(some text here));
 /// ```
-//TODO: Can probably be more sophisticated
 macro_rules! args {
     ($app:tt $($q:tt)*) => {
         {
