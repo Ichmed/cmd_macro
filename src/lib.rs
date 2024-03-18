@@ -6,6 +6,7 @@ pub mod opt_arg;
 pub mod output;
 pub mod args;
 
+#[doc(hidden)]
 pub mod internal {
     #[macro_export]
     macro_rules! cmd_partial {
@@ -133,13 +134,12 @@ mod test {
 
     use std::env;
 
-    use crate::exec;
     use crate::output::OutputExt;
     use crate::run;
 
     #[test]
     fn hello_world() {
-        exec!(echo "Hello World!").unwrap();
+        run!(echo "Hello World!").unwrap();
     }
 
     #[test]

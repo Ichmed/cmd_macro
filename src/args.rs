@@ -1,7 +1,5 @@
 use std::ffi::OsStr;
 
-use crate::opt_arg::OptionalArgExtension;
-
 #[macro_export]
 /// Create an iterator to add args to an existing Command
 /// ```
@@ -46,6 +44,10 @@ impl<'a> ArgContainer<'a> {
     }
 }
 
+#[cfg(feature = "opt_arg")]
+use crate::opt_arg::OptionalArgExtension;
+
+#[cfg(feature = "opt_arg")]
 impl<'a, T: AsRef<OsStr> + ?Sized> OptionalArgExtension<Option<&'a T>> for ArgContainer<'a> {
     fn opt_arg(&mut self, val: Option<&'a T>) -> &mut Self {
         if let Some(arg) = val {
@@ -55,11 +57,12 @@ impl<'a, T: AsRef<OsStr> + ?Sized> OptionalArgExtension<Option<&'a T>> for ArgCo
     }
 }
 
+#[cfg(feature = "opt_arg")]
 impl<'a, Name, Value, I> OptionalArgExtension<(&'a Name, I)> for ArgContainer<'a>
 where
-    Name: AsRef<OsStr> + ?Sized + 'a,
-    Value: AsRef<OsStr> + ?Sized + 'a,
-    I: IntoIterator<Item = &'a Value>,
+Name: AsRef<OsStr> + ?Sized + 'a,
+Value: AsRef<OsStr> + ?Sized + 'a,
+I: IntoIterator<Item = &'a Value>,
 {
     fn opt_arg(&mut self, val: (&'a Name, I)) -> &mut Self {
         let (flag, i) = val;
@@ -75,10 +78,11 @@ where
 #[cfg(test)]
 mod test {
     use std::process::Command;
-
+    
+    #[cfg(feature = "opt_arg")]
     use crate::opt_arg::OptionalArgExtension as _;
     use crate::output::OutputExt as _;
-
+    
     #[test]
     fn args_macro() {
         let mut x = Command::new("echo");
@@ -87,7 +91,8 @@ mod test {
         let result = x.output().unwrap();
         assert_eq!(format!("Hello Steve"), result.stdout().unwrap());
     }
-
+    
+    #[cfg(feature = "opt_arg")]
     #[test]
     fn args_macro_optional() {
         let mut x = Command::new("echo");
