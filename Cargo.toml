@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 description = "Allows you to write more shell-like Commands"
 license = "MIT OR Apache-2.0"
+repository = "https://github.com/Ichmed/cmd_macro"
 
 [features]
 default = ["opt_arg", "output", "ok"]
