@@ -14,8 +14,8 @@ pub trait OkExt: Sized {
     /// Use this to early return when a call to another command failed
     /// ```no_run
     /// # use std::process::Command;
-    /// # use cmd_macro::ok::OkExt;
-    /// let x = Command::new("echo").arg("test").output().ok().unwrap().stdout;
+    /// # use humane_commands::ok::OkExt as _;
+    /// let x = Command::new("echo").arg("test").output().cmd_ok().unwrap().stdout;
     /// assert_eq!(String::from_utf8_lossy(&x), "test")
     /// ```
     ///
@@ -29,8 +29,8 @@ pub trait OkExt: Sized {
     /// For `Result<T, std::io::Error>` the type of `Success` is `T`, for other types it is `Self`
     /// ```no_run
     /// # use std::process::Command;
-    /// # use cmd_macro::ok::OkExt;
-    /// Command::new("foo").output().ok().unwrap();
+    /// # use humane_commands::ok::OkExt;
+    /// Command::new("foo").output().cmd_ok_no_msg().unwrap();
     /// ```
     ///
     /// The returned Err will not contain any output from the [Command]

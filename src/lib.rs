@@ -87,7 +87,7 @@ macro_rules! spawn {
 ///
 /// Example
 /// ```
-/// # use cmd_macro::cmd;
+/// # use humane_commands::cmd;
 /// cmd!(echo Hello World);
 /// ```
 /// Single words are stringified
@@ -97,24 +97,24 @@ macro_rules! spawn {
 /// ```
 /// Escaping spaces with quotes is possible
 /// ```
-/// # use cmd_macro::cmd;
+/// # use humane_commands::cmd;
 /// let mut x = cmd!(echo "Hello World!");
 /// ```
 /// Identifiers in parantheses are interpolated
 /// ```no_run
-/// # use cmd_macro::cmd;
+/// # use humane_commands::cmd;
 /// let name = "Steve";
 /// cmd!(echo (name));
 /// ```
 /// Identifiers followed by `..` are interpolated as iterators
 /// ```no_run
-/// # use cmd_macro::cmd;
+/// # use humane_commands::cmd;
 /// let names = ["Steve", "Mike"];
 /// cmd!(echo (names..));
 /// ```
 /// Use `var(name)` to interpolate env vars
 /// ```no_run
-/// # use cmd_macro::cmd;
+/// # use humane_commands::cmd;
 /// cmd!(echo (var(PATH)));
 /// ```
 /// Note that this will use the callers environment variables,

@@ -4,7 +4,7 @@ use std::ffi::OsStr;
 /// Create an iterator to add args to an existing Command
 /// ```
 /// # use std::process::Command;
-/// # use cmd_macro::args;
+/// # use humane_commands::args;
 /// let mut x = Command::new("echo");
 /// x.args(args!(some text here));
 /// ```

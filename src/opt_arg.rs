@@ -45,7 +45,7 @@ pub trait OptionalArgExtension<T> {
     /// 
     /// ```
     /// # use std::process::Command;
-    /// # use cmd_macro::opt_arg::OptionalArgExtension;
+    /// # use humane_commands::opt_arg::OptionalArgExtension;
     /// let maybe = Some("test");
     /// Command::new("echo").opt_arg(maybe).status();
     /// ```
@@ -53,13 +53,13 @@ pub trait OptionalArgExtension<T> {
     /// Only include the "-c" if there is a command to run
     /// ```
     /// # use std::process::Command;
-    /// # use cmd_macro::opt_arg::OptionalArgExtension;
+    /// # use humane_commands::opt_arg::OptionalArgExtension;
     /// let maybe_flag = ("-c", Some("emacs"));
     /// Command::new("bash").opt_arg(maybe_flag).status();
     /// ```
     /// ```
     /// # use std::process::Command;
-    /// # use cmd_macro::opt_arg::OptionalArgExtension;
+    /// # use humane_commands::opt_arg::OptionalArgExtension;
     /// let maybe_flag = ("-c", ["echo", "some", "stuff"]);
     /// Command::new("bash").opt_arg(maybe_flag).status();
     /// ```
