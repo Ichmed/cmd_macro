@@ -38,11 +38,7 @@ pub mod internal {
             x
         }};
         ($x:ident; ($e:tt?)) => {{
-            #[cfg(feature = "opt_arg")]
-            let x = $x.opt_arg($e);
-            #[cfg(not(feature = "opt_arg"))]
-            let x = compile_error!("Requires 'opt_arg' feature");
-            x
+            $x.opt_arg($e)
         }};
         ($x:ident; ($e:tt..)) => {
             $x.args($e)
