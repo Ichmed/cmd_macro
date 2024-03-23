@@ -31,11 +31,7 @@ pub mod internal {
             $x.arg(std::env::var(stringify!($e)).unwrap_or_default())
         };
         ($x:ident; ($f:tt $e:tt?)) => {{
-            #[cfg(feature = "opt_arg")]
-            let x = $x.opt_arg(($crate::internal::cmd_partial!($f), $e));
-            #[cfg(not(feature = "opt_arg"))]
-            let x = compile_error!("Requires 'opt_arg' feature");
-            x
+            $x.opt_arg(($crate::internal::cmd_partial!($f), $e))
         }};
         ($x:ident; ($e:tt?)) => {{
             $x.opt_arg($e)
