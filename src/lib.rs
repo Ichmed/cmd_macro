@@ -56,7 +56,7 @@ pub mod internal {
 /// Create a Command with the `cmd!` macro and call output() on it
 macro_rules! run {
     ($app:tt $($q:tt)*) => {
-        cmd!($app $($q)*).output()
+        $crate::cmd!($app $($q)*).output()
     }
 }
 
@@ -64,7 +64,7 @@ macro_rules! run {
 /// Create a Command with the `cmd!` macro and call status() on it
 macro_rules! exec {
     ($app:tt $($q:tt)*) => {
-        cmd!($app $($q)*).status()
+        $crate::cmd!($app $($q)*).status()
     }
 }
 
@@ -72,7 +72,7 @@ macro_rules! exec {
 /// Create a Command with the `cmd!` macro and call spawn() on it
 macro_rules! spawn {
     ($app:tt $($q:tt)*) => {
-        cmd!($app $($q)*).spawn()
+        $crate::cmd!($app $($q)*).spawn()
     }
 }
 
